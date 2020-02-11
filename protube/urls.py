@@ -19,5 +19,5 @@ from django.urls import path
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    path('', include('backend.urls'))
+    path('', include('yt_search.urls'))
 ]
