@@ -9,3 +9,7 @@ router.register('videos', VideoView)
 urlpatterns = [
     path('', include(router.urls))
 ]
+
+# AIzaSyAiXhiotgS4Ett0i5jsmk5VH_Nv-LUVH80
+
+# https://www.googleapis.com/youtube/v3/search?part=snippet&order=date&q=football&regionCode=IN&type=video&key=AIzaSyAiXhiotgS4Ett0i5jsmk5VH_Nv-LUVH80
