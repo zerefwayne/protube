@@ -2,6 +2,7 @@ from django.db import models
 
 # Create your models here.
 
+# HTTP Response:
 # {
 #    "id": {
 #     "videoId": "GI2Z53mGIJE"
@@ -19,4 +20,18 @@ from django.db import models
 #    }
 #  }
 
+
+class Video(models.Model):
+    video_id = models.CharField()
+    published_at = models.DateTimeField()
+    video_title = models.CharField()
+    thumbnail_url = models.CharField()
+    channel_title = models.CharField()
+    added_on = models.DateTimeField(editable=False, auto_now_add=True)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return "%s titled %s publised on %s added on %s by %s" % (self.video_id, self.video_title, str(self.published_at), str(self.added_on), self.channel_title)
 
