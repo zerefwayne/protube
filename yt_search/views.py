@@ -3,11 +3,13 @@ from rest_framework import viewsets
 
 from .serializers import VideoSerializer
 from .models import YoutubeVideo
-from .tasks import add_two_numbers
-# Create your views here.
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 
-class VideoView(viewsets.ModelViewSet):
-    add_two_numbers.apply_async(countdown=10)
-    queryset = YoutubeVideo.objects.all()
-    serializer_class = VideoSerializer
+@api_view(['GET'])
+def get_videos(request):
+    if request.method == 'GET':
+        queryset = YoutubeVideo.objects.all()
+        serializer = VideoSerializer(queryset, many=True)
+        return Response(serializer.data)
