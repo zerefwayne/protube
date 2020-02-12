@@ -1,7 +1,7 @@
 from django.urls import path, include
 
-from .views import get_videos
+from .views import VideoView
 
 urlpatterns = [
-    path('videos/', get_videos)
+    path('videos/', VideoView.as_view())
 ]
