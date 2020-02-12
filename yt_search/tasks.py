@@ -1,53 +1,61 @@
 from celery.schedules import crontab
 from celery.task import periodic_task
 from celery.utils.log import get_task_logger
+from celery.task import PeriodicTask
 from datetime import timedelta
 import datetime
 import requests
 from .models import YoutubeVideo
+from api_manager.models import APIKey
 
 logger = get_task_logger(__name__)
 
-# {
-#   id: {
-#       videoId: "9Q9GP5I0q2U"
-#   },
-#   snippet: {
-#       publishedAt: "2020-02-11T18:27:00.000Z",
-#       title: "Darren Jackson: My Thoughts Are With Jackie - The Football Show - Tue 11th Feb 2020.",
-#       description: "SUBSCRIBE HERE ➡️: https://bit.ly/2wbYWiG With Arnold Clark Visit us on: http://plzsoccer.com Follow us on Twitter: @plzsoccer Like us on Facebook: ...",
-#       thumbnails: {
-#           default: {
-#               url: "https://i.ytimg.com/vi/9Q9GP5I0q2U/default.jpg",
-#           },
-#       },
-#       channelTitle: "PLZ Soccer - The Football Show",
-#   }
-# },
+search_topic = "cricket"
+
+URL = "https://www.googleapis.com/youtube/v3/search?part=snippet&order=date&q="+search_topic+"&regionCode=IN&type=video&key="
 
 
-# {'error': {'errors': [{'domain': 'usageLimits', 'reason': 'dailyLimitExceeded', 'message': 'Daily Limit Exceeded. The quota will be reset at midnight Pacific Time (PT). You may monitor your quota usage and adjust limits in the API Console: https://console.developers.google.com/apis/api/youtube.googleapis.com/quotas?project=229626395005', 'extendedHelp': 'https://console.developers.google.com/apis/api/youtube.googleapis.com/quotas?project=229626395005'}], 'code': 403, 'message': 'Daily Limit Exceeded. The quota will be reset at midnight Pacific Time (PT). You may monitor your quota usage and adjust limits in the API Console: https://console.developers.google.com/apis/api/youtube.googleapis.com/quotas?project=229626395005'}}
+def generate_new_api_key():
+    new_api_key = APIKey.objects.filter(exhausted=False)
 
-URL = "https://www.googleapis.com/youtube/v3/search?part=snippet&order=date&q=football&regionCode=IN&type=video&key=AIzaSyC-CqA46hfh4_3vzFR772sy8JCelAnFy2w"
+    if new_api_key:
+        return {'success': True, 'data': new_api_key[0]}
+    else:
+        return {'success': False}
 
 
-@periodic_task(run_every=(timedelta(minutes=1)), name="fetch_youtube_data", ignore_result=True)
+@periodic_task(run_every=(timedelta(seconds=10)), name="fetch_youtube_data", ignore_result=True)
 def fetch_youtube_data():
 
-    r = requests.get(url=URL)
-    data = r.json()
+    api_key = generate_new_api_key()
 
-    if data['items']:
+    if api_key['success']:
 
-        number_of_videos_found = len(data['items'])
+        complete_url = URL + str(api_key['data'])
 
-        for i in range(number_of_videos_found):
+        r = requests.get(url=complete_url)
+        data = r.json()
 
-            video = data['items'][i]
+        if data['items']:
 
-            new_model = YoutubeVideo(videoId=video['id']['videoId'], publishedAt=video['snippet']['publishedAt'], videoTitle=video['snippet']['title'], description = video['snippet']['description'], thumbnailUrl=video['snippet']['thumbnails']['default']['url'], channelTitle=video['snippet']['channelTitle'], addedOn=datetime.datetime.utcnow().isoformat())
+            number_of_videos_found = len(data['items'])
 
-            new_model.save()
+            for i in range(number_of_videos_found):
 
-    elif data['error']:
-        return data['error']['errors'][0]['message']
+                video = data['items'][i]
+
+                new_model = YoutubeVideo(videoId=video['id']['videoId'], publishedAt=video['snippet']['publishedAt'], videoTitle=video['snippet']['title'], description = video['snippet']['description'], thumbnailUrl=video['snippet']['thumbnails']['default']['url'], channelTitle=video['snippet']['channelTitle'], addedOn=datetime.datetime.utcnow().isoformat())
+
+                new_model.save()
+
+        elif data['error']:
+
+            APIKey.objects.filter(api_key=api_key).update(exhausted=True)
+            fetch_youtube_data()
+
+    else:
+
+        task = PeriodicTask.objects.get(name="fetch_youtube_data")
+        task.delete()
+        return dict({'error': "No API Key Found. Please supply a new one."})
+

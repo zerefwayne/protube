@@ -9,5 +9,7 @@ class APIKey(models.Model):
     exhausted = models.BooleanField(default=False)
 
     def __str__(self):
-        return "Exhausted: %s, %s" % (str(self.exhausted), self.api_key)
+        return self.api_key
+
+
 
