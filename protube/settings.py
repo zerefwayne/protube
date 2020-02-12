@@ -36,7 +36,8 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'yt_search'
+    'yt_search',
+    'api_manager'
 )
 
 MIDDLEWARE_CLASSES = (

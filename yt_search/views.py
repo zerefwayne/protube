@@ -13,7 +13,7 @@ from yt_pagination import YoutubeVideoResultsPagination
 class VideoView(APIView, YoutubeVideoResultsPagination):
 
     def get(self, request, format=None):
-        queryset = YoutubeVideo.objects.all()
+        queryset = YoutubeVideo.objects.order_by('-publishedAt').all()
         page = self.paginate_queryset(queryset, request)
 
         if page is not None:
