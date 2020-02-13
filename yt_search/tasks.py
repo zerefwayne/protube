@@ -24,7 +24,7 @@ def generate_new_api_key():
         return {'success': False}
 
 
-@periodic_task(run_every=(timedelta(seconds=10)), name="fetch_youtube_data", ignore_result=True)
+@periodic_task(run_every=(timedelta(minutes=15)), name="fetch_youtube_data", ignore_result=True)
 def fetch_youtube_data():
 
     api_key = generate_new_api_key()
